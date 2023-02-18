@@ -52,41 +52,60 @@ void help_msg()
 
 void process_file(const char *fname, const char vowel)
 {
+    printf("Counting vowel %c\n", vowel);
+
     FILE *f = fopen(fname, "rb");
     unsigned char c;
     unsigned char *char_utf8;
-    int res, bytes_to_read = 0;
+    int inWord = 0, // flag to say if you are insde a word or not
+        res, // determines if the fread function had success or not
+        bytes_to_read = 0; // bytes to read
     res = fread(&c, sizeof(unsigned char), 1, f);
     while (res == 1)
     {
-        if ((c & 0xA) == 0b0000)
+        printf("\n---------------------------------\n");
+        //printf("First CHAR: 0x%X \n", c);
+        //printf("First CHAR: 0x%X, 0x%X \n", c, (c & 0xA));
+        //printf("First CHAR: 0x%X, 0x%X \n", c, (c & 0xF0));
+        //printf("First CHAR: 0x%X, 0x%X \n", c, (c & 0xF0));
+        //printf("First CHAR: 0x%X, 0x%X \n", c, (c & 0xFA));
+        if ((c & 0xA0) == 0b0000)
         {
-            printf("%X - 0 \n", c);
+            printf("VALUES %X - 0 \n", c);
             bytes_to_read = 0;
         }
-        if ((c & 0xF) == 0b1100)
+        if ((c & 0xF0) == 0xC0)
         {
-            printf("%X -1\n", c);
-            bytes_to_read = 0;
+            printf("\tVALUES %X - 1\n", c);
+            bytes_to_read = 1;
         }
-        if ((c & 0xF) == 0b1110)
+        if ((c & 0xF0) == 0xE0)
         {
-            printf("%X - 2\n", c);
+            printf("\tVALUES %X - 2\n", c);
             bytes_to_read = 2;
         }
         if ((c & 0xFA) == 0XF0)
         {
-            printf("%X - 3\n", c);
+            printf("\tVALUES %X - 3\n", c);
             bytes_to_read = 3;
         }
 
-        char_utf8 = (unsigned char *)malloc((bytes_to_read + 1) * sizeof(unsigned char));
+        char_utf8 = (unsigned char *)malloc((bytes_to_read + 2) * sizeof(unsigned char));
+        //printf("Size %ul, calc %d \n", strlen(char_utf8), bytes_to_read + 2);
         char_utf8[0] = c;
-        res = fread(&(char_utf8[1]), sizeof(unsigned char), bytes_to_read, f);
-        printf("String: %s\n", char_utf8);
-      
-      
-        bytes_to_read = 1;
+        char_utf8[bytes_to_read + 1] = '\0';
+
+        if (bytes_to_read != 0)
+            res = fread(&(char_utf8[1]), sizeof(unsigned char), bytes_to_read, f);
+
+        printf("String: |%s|\n", char_utf8);
+        printf("Valor bool %X , %X Controlo %d\n", char_utf8[0] , char_utf8[1], 1==1 );
+
+        printf("TODO: Determine if inside word or if we left if we left increment counter\n");
+        printf("TODO: DETERMIN IF THE current char matches the vowel we are counting\n");
+
+
+        bytes_to_read = 0;
         res = fread(&c, sizeof(unsigned char), 1, f);
         free(char_utf8);
     }
