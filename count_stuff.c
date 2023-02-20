@@ -111,39 +111,57 @@ int process_file(const char *fname, const char vowel)
         if (bytes_to_read != 0)
             res = fread(&(char_utf8[1]), sizeof(unsigned char), bytes_to_read, f);
 
-        if (strlen(char_utf8) == 3){
-            if (char_utf8[0] == 0xE2 && char_utf8[1] == 0x80 && (
-                char_utf8[2] == 0x9C || char_utf8[2] == 0x9D ||
-                char_utf8[2] == 0x93 || char_utf8[2] == 0xA6 )){
-                    inWord = 0;
-                }
-        } else if ( char_utf8[0] == 0x20 || char_utf8[0] == 0x09 || char_utf8[0] == 0x0A || 
-            char_utf8[0] == 0x0D || char_utf8[0] == 0x2D || char_utf8[0] == 0x22 || 
-            char_utf8[0] == 0x5B || char_utf8[0] == 0x5D || char_utf8[0] == 0x28 || 
-            char_utf8[0] == 0x29 || char_utf8[0] == 0x2E || char_utf8[0] == 0x2C || 
-            char_utf8[0] == 0x3A || char_utf8[0] == 0x3B || char_utf8[0] == 0x3F || 
-            char_utf8[0] == 0x21 ){
-            inWord = 0;
-        } else {
-            if(inWord == 0){
-                inWord = 1;
-                total_words++;
-            }
-        }
+        // if (strlen(char_utf8) == 3){
+        //     if (char_utf8[0] == 0xE2 && char_utf8[1] == 0x80 && (
+        //         char_utf8[2] == 0x9C || char_utf8[2] == 0x9D ||
+        //         char_utf8[2] == 0x93 || char_utf8[2] == 0xA6 )){
+        //             inWord = 0;
+        //     } else if (inWord == 1 && char_utf8[0] == 0xE2 && char_utf8[1] == 0x80 && (
+        //         char_utf8[2] == 0x98 || char_utf8[2] == 0x99)){
+        //         inWord = 1;
+        //     }
+        // // } else if (strlen(char_utf8) == 2){
+        // //     if (char_utf8[1] == 0xC2 && (char_utf8[2] == 0xAB || char_utf8[2] == 0xBB )) inWord = 0;
+        // //     else inWord = 1;
+        // } else if ( char_utf8[0] == 0x20 || char_utf8[0] == 0x09 || char_utf8[0] == 0x0A || 
+        //     char_utf8[0] == 0x0D || char_utf8[0] == 0x2D || char_utf8[0] == 0x22 || 
+        //     char_utf8[0] == 0x5B || char_utf8[0] == 0x5D || char_utf8[0] == 0x28 || 
+        //     char_utf8[0] == 0x29 || char_utf8[0] == 0x2E || char_utf8[0] == 0x2C || 
+        //     char_utf8[0] == 0x3A || char_utf8[0] == 0x3B || char_utf8[0] == 0x3F || 
+        //     char_utf8[0] == 0x21 ){
+        //     inWord = 0;
+        // } else {
+        //     if(inWord == 0){
+        //         inWord = 1;
+        //         total_words++;
+        //         if (char_utf8[0] > 0x7a) printf("Word %s\n", char_utf8);
+        //     }
+        // }
 
         // Check if 1st bit is in range of the latin letters area
         // This is
         // Problem: × →→ c3 97 →→ MULTIPLICATION SIGN && ÷ →→ c3 b7 →→ DIVISION SIGN
-        // if (((char_utf8[0] >= 0x41 && char_utf8[0] <= 0x5a) 
-        //     || (char_utf8[0] >= 0x61 && char_utf8[0] <= 0x7a) 
-        //     || (char_utf8[0] >= 0xC3 && char_utf8[0] <= 0xC6))){
-        //     if (inWord == 0){
-        //         inWord = 1;
-        //         total_words++;
-        //     }
-        // } else {
-        //     inWord = 0;
-        // }
+        if (((char_utf8[0] >= 0x41 && char_utf8[0] <= 0x5a) 
+            || (char_utf8[0] >= 0x61 && char_utf8[0] <= 0x7a)
+            || (char_utf8[0] >= 0x30 && char_utf8[0] <= 0x39)
+            || (char_utf8[0] == 0xC3))){
+            if (inWord == 0){
+                inWord = 1;
+                total_words++;
+                // printf("Word %s\n", char_utf8);
+            }
+        } else if (char_utf8[0] == 0x27 && inWord == 1){
+            inWord = 1;
+        } else if (strlen(char_utf8) == 3){
+            if (inWord == 1 && char_utf8[0] == 0xE2 && char_utf8[1] == 0x80 && (
+                char_utf8[2] == 0x98 || char_utf8[2] == 0x99)){
+                inWord = 1;
+            } else {
+                inWord = 0;
+            }
+        } else {
+            inWord = 0;
+        }
 
         // TODO: Check if word has vowel (work in progress)
         if (char_utf8[0] == vowel && inWord == 1){
