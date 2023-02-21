@@ -43,11 +43,6 @@ int main(int argc, char *argv[])
 
         int total_words = 0;
         total_words = process_file(argv[i], vowel);
-
-        printf("\nFile name: %s\n", argv[i]);
-        printf("Total number of words = %i\n", total_words);
-        printf("N. of words with an \n \t A \t E \t I \t O \t U \t Y \n");
-        printf("\t A \t E \t I \t O \t U \t Y \n");
     }
     exit(EXIT_SUCCESS);
 }
@@ -55,6 +50,25 @@ int main(int argc, char *argv[])
 void help_msg()
 {
     printf("Help\n");
+}
+
+void reset_flags(int* inWord, int* has_A, int* has_E, int* has_I, int* has_O, int* has_U, int* has_Y){
+    *inWord = 0;
+    *has_A = 0;
+    *has_E = 0;
+    *has_I = 0;
+    *has_O = 0;
+    *has_U = 0;
+    *has_Y = 0;
+    return;
+}
+
+void update_status(int* flag, int* stats){
+    if (*flag == 0){
+        *flag = 1;
+        *stats = *stats + 1;
+    }
+    return;
 }
 
 int process_file(const char *fname, const char vowel)
@@ -69,9 +83,18 @@ int process_file(const char *fname, const char vowel)
         bytes_to_read = 0, // bytes to read
 
         total_words = 0, // total number of words
-        hasVowel = 0, // flag to say if word has the vowel we are counting
-        total_words_vowel = 0; // total number of words with the vowel
-    unsigned char v = 'a'; // vowel we are counting
+        has_A = 0, // flag to say if word has an A
+        has_E = 0, // flag to say if word has an E
+        has_I = 0, // flag to say if word has an I
+        has_O = 0, // flag to say if word has an O
+        has_U = 0, // flag to say if word has an U
+        has_Y = 0, // flag to say if word has an Y
+        total_words_A = 0, // total number of words with the A
+        total_words_E = 0, // total number of words with the E
+        total_words_I = 0, // total number of words with the I
+        total_words_O = 0, // total number of words with the O
+        total_words_U = 0, // total number of words with the U
+        total_words_Y = 0; // total number of words with the Y
 
     res = fread(&c, sizeof(unsigned char), 1, f);
     while (res == 1)
@@ -145,11 +168,7 @@ int process_file(const char *fname, const char vowel)
             || (char_utf8[0] >= 0x61 && char_utf8[0] <= 0x7a)
             || (char_utf8[0] >= 0x30 && char_utf8[0] <= 0x39)
             || (char_utf8[0] == 0xC3))){
-            if (inWord == 0){
-                inWord = 1;
-                total_words++;
-                // printf("Word %s\n", char_utf8);
-            }
+            update_status(&inWord, &total_words);
         } else if (char_utf8[0] == 0x27 && inWord == 1){
             inWord = 1;
         } else if (strlen(char_utf8) == 3){
@@ -157,18 +176,49 @@ int process_file(const char *fname, const char vowel)
                 char_utf8[2] == 0x98 || char_utf8[2] == 0x99)){
                 inWord = 1;
             } else {
-                inWord = 0;
+                reset_flags(&inWord, &has_A, &has_E, &has_I, &has_O, &has_U, &has_Y);
             }
         } else {
-            inWord = 0;
+            reset_flags(&inWord, &has_A, &has_E, &has_I, &has_O, &has_U, &has_Y);
         }
 
-        // TODO: Check if word has vowel (work in progress)
-        if (char_utf8[0] == vowel && inWord == 1){
-            hasVowel = 1;
-        } else if (hasVowel == 1 && inWord == 0){
-            hasVowel = 0;
-            total_words_vowel++;
+        if (inWord == 1){
+            if (strlen(char_utf8) == 2 && char_utf8[0] == 0xC3){
+                if ((char_utf8[1] >= 0xA0 && char_utf8[1] <= 0xA3) ||
+                    (char_utf8[1] >= 0x80 && char_utf8[1] <= 0x83)){
+                    update_status(&has_A, &total_words_A);
+                } 
+                if ((char_utf8[1] >= 0xA8 && char_utf8[1] <= 0xAA) ||
+                    (char_utf8[1] >= 0x88 && char_utf8[1] <= 0x8A)){
+                    update_status(&has_E, &total_words_E);
+                }
+                if ((char_utf8[1] >= 0xAC && char_utf8[1] <= 0xAD) ||
+                    (char_utf8[1] >= 0x8C && char_utf8[1] <= 0x8D)){
+                    update_status(&has_I, &total_words_I);
+                }
+                if ((char_utf8[1] >= 0xB2 && char_utf8[1] <= 0xB5) ||
+                    (char_utf8[1] >= 0x92 && char_utf8[1] <= 0x95)){
+                    update_status(&has_O, &total_words_O);
+                }
+                if ((char_utf8[1] >= 0xB9 && char_utf8[1] <= 0xBA) ||
+                    (char_utf8[1] >= 0x99 && char_utf8[1] <= 0x9A)){
+                    update_status(&has_U, &total_words_U);
+                }
+            } else {
+                if (char_utf8[0] == 0x41 || char_utf8[0] == 0x61){
+                    update_status(&has_A, &total_words_A);
+                } else if (char_utf8[0] == 0x45 || char_utf8[0] == 0x65){
+                    update_status(&has_E, &total_words_E);
+                } else if (char_utf8[0] == 0x49 || char_utf8[0] == 0x69){
+                    update_status(&has_I, &total_words_I); 
+                } else if (char_utf8[0] == 0x4F || char_utf8[0] == 0x6F){
+                    update_status(&has_O, &total_words_O); 
+                } else if (char_utf8[0] == 0x55 || char_utf8[0] == 0x75){
+                    update_status(&has_U, &total_words_U); 
+                } else if (char_utf8[0] == 0x59 || char_utf8[0] == 0x79){
+                    update_status(&has_Y, &total_words_Y);
+                }
+            }
         }
         
         // printf("String: |%s|\n", char_utf8);
@@ -187,6 +237,11 @@ int process_file(const char *fname, const char vowel)
         // printf("Number of words with vowel %c: %i\n", v, total_words_vowel);
     }
     fclose(f);
+
+    printf("\nFile name: %s\n", fname);
+    printf("Total number of words = %i\n", total_words);
+    printf("N. of words with an \n \t A \t E \t I \t O \t U \t Y \n");
+    printf("\t %i \t %i \t %i \t %i \t %i \t %i \n", total_words_A, total_words_E, total_words_I, total_words_O, total_words_U, total_words_Y);
 
     return total_words;
 }
