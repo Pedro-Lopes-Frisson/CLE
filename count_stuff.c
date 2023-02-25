@@ -47,20 +47,20 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
     }
-    size_t word_count[argc - optind + 1];
+    size_t word_count[(argc - optind)];
     size_t word_vowel_count[(argc - optind + 1) * MAX_VOWELS];
 
+    printf("%d\n", argc - optind + 1);
+    printf("%d\n",(argc - optind + 1) * (MAX_VOWELS + 1) );
     int idx_start = 0;
-    for (int i = optind; i < argc; i++, idx_start=(i * MAX_VOWELS) )
+    for (int i = optind; i < argc; i++, idx_start=((i - optind) * MAX_VOWELS) )
     {
-        printf("%s\n", argv[i]);
-
-        process_file(argv[i], &word_count[i], &word_vowel_count[i * MAX_VOWELS]);
+        process_file(argv[i], &word_count[(i-optind)], &word_vowel_count[idx_start]);
         printf("\nFile name: %s\n", argv[i]);
-        printf("Total number of words = %zu\n", word_count[0]);
-        printf("N. of words with an \n \t A \t E \t I \t O \t U \t Y \n");
+        printf("Total number of words = %zu\n", word_count[i-optind]);
+        printf("N. of words with an \n\t%13s%13s%13s%13s%13s%13s \n\t", "A", "E", "I", "O", "U", "Y" );
         for (int j = idx_start; j < idx_start + MAX_VOWELS; j++) {
-            printf("\t %zu", word_vowel_count[j]);
+            printf("%13zu", word_vowel_count[j]);
         }
         printf("\n");
     }
@@ -102,12 +102,12 @@ void process_file(const char *fname, size_t *words_count, size_t *words_with_vow
     size_t word_count = 0,
         word_count_vowel = 0,
         total_words = 0,
-        total_words_A = 0, // total number of words with the A
-        total_words_E = 0, // total number of words with the E
-        total_words_I = 0, // total number of words with the I
-        total_words_O = 0, // total number of words with the O
-        total_words_U = 0, // total number of words with the U
-        total_words_Y = 0; // total number of words with the Y
+        total_words_A =0, // total number of words with the A
+        total_words_E =0, // total number of words with the E
+        total_words_I =0, // total number of words with the I
+        total_words_O =0, // total number of words with the O
+        total_words_U =0, // total number of words with the U
+        total_words_Y =0; // total number of words with the Y
 
     int inWord = 0, res = 0, bytes_to_read = 0,        // flag to say if you are insde a word or not
         has_A = 0, // flag to say if word has an A
@@ -121,7 +121,7 @@ void process_file(const char *fname, size_t *words_count, size_t *words_with_vow
 
     while (res != EOF)
     {
-        printf("First CHAR: %ld  %s\n", strlen(char_utf8), char_utf8);
+        //printf("First CHAR: %ld  %s\n", strlen(char_utf8), char_utf8);
 
 
         if ((((unsigned char)char_utf8[0] >= 0x41 && (unsigned char)char_utf8[0] <= 0x5a) 
@@ -184,9 +184,8 @@ void process_file(const char *fname, size_t *words_count, size_t *words_with_vow
         res = extract_char(f, char_utf8);
     }
 
-    *words_count = total_words;
+    words_count[0] = total_words;
 
-    *words_with_vowel = total_words;
     words_with_vowel[0] = total_words_A;
     words_with_vowel[1] = total_words_E;
     words_with_vowel[2] = total_words_I;
