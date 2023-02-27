@@ -50,8 +50,6 @@ int main(int argc, char *argv[])
     size_t word_count[(argc - optind)];
     size_t word_vowel_count[(argc - optind + 1) * MAX_VOWELS];
 
-    printf("%d\n", argc - optind + 1);
-    printf("%d\n",(argc - optind + 1) * (MAX_VOWELS + 1) );
     int idx_start = 0;
     for (int i = optind; i < argc; i++, idx_start=((i - optind) * MAX_VOWELS) )
     {
@@ -193,7 +191,6 @@ void process_file(const char *fname, size_t *words_count, size_t *words_with_vow
     words_with_vowel[4] = total_words_U;
     words_with_vowel[5] = total_words_Y;
 
-    printf("The file %s has:\n%zu words and %zu have the vowel .\n", fname, total_words, word_count_vowel );
     fclose(f);
     return;
 }
