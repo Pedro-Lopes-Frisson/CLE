@@ -17,35 +17,25 @@ int extract_int(FILE * f, int * num);
 // Process text file in way that we compile number of words and number of words that contain a vowel
 void process_file(const char *fname);
 void bitonic_sort(int * arr, int n) {
+    // the two first loops are the merging part
+    // the last one is the sorting part
      for (int k = 2; k <= n; k = k * 2) {
+        // sort the subsequence of k members to bitonic sequences
         for (int j = k / 2; j > 0; j = j / 2) {
+            // Sort bitonic sequence of length k according to direction needed
             for (int i = 0; i < n; i++) {
-                int ij = i ^ j;
+                // sort elements
+                int ij = i ^ j; // get the other index to be sorted
                 if (ij > i) {
-                    int dir = ((i & k) == 0);
+                    int dir = ((i & k) == 0); // get direction
+                    //printf("k %d,j %d,i %d,ij %d,dir %d\n",k,j,i,ij,dir);
+                    //CAPS
                     if ((arr[i] > arr[ij]) == dir) {
                         int temp = arr[i];
                         arr[i] = arr[ij];
                         arr[ij] = temp;
                     }
-                }
-            }
-        }
-    }
-    for (int i = 0; i < n; i++) {
-        printf("%d,", arr[i]);
-    }
-    printf("\n");
-
-    // Step 2: Merge the sorted sequence into a fully sorted sequence
-    for (int k = n / 2; k > 0; k /= 2) {
-        for (int i = 0; i < n; i += k * 2) {
-            for (int j = 0; j < k; j++) {
-                int p = i + j, q = i + j + k;
-                if ((arr[p] > arr[q])) {
-                    int temp = arr[p];
-                    arr[p] = arr[q];
-                    arr[q] = temp;
+                    //END CAPS
                 }
             }
         }
@@ -116,7 +106,7 @@ void process_file(const char *fname){
         fprintf(stderr, "Error reading Size of array\n");
         exit(EXIT_FAILURE);
     }
-    fprintf(stdout, "Number %d\n", number_of_values / (1024));
+    //fprintf(stdout, "Number %d\n", number_of_values / (1024));
 
     values = (int *) malloc(sizeof(int) * number_of_values);
     for (int i = 0; i < number_of_values;i++) {
@@ -126,7 +116,7 @@ void process_file(const char *fname){
             exit(EXIT_FAILURE);
         }
 
-        fprintf(stdout, "[%d]\t %d\n",i, values[i]);
+        //fprintf(stdout, "[%d]\t %d\n",i, values[i]);
     }
 
     bitonic_sort(values, number_of_values);

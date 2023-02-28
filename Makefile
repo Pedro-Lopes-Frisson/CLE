@@ -1,6 +1,6 @@
 CC =  gcc # Set the compiler
-#L_FLAGS = -O3 # comment to get proper prints in gdb no optimized variables
-C_FLAGS = -g -lm # uncomment to get debug symbols
+L_FLAGS = -O3 # comment to get proper prints in gdb no optimized variables
+C_FLAGS = -lm # uncomment to get debug symbols
 
 all: cf bSort
 .PHONY: all
