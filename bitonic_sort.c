@@ -17,27 +17,38 @@ int extract_int(FILE * f, int * num);
 // Process text file in way that we compile number of words and number of words that contain a vowel
 void process_file(const char *fname);
 void bitonic_sort(int * arr, int n) {
-    printf("%zu SIZE; %d = n\n", sizeof(arr), n);
-    int k = log2((double)n);
-    int v = n >> 1;
-    int nL = 1;
-    for(int i = 0; i < k; i++){
-        int n = 0;
-        int u = 0;
-        while (n < nL) {
-            for(int t = 0; t < v; t++){
-                printf("%d - %d\n", t + u , t + u + v);
-                if(arr[t+u] > arr[t+u+v]){
-                    int new_val = arr[t+u];
-                    arr[t+u] = arr[t+u+v];
-                    arr[t+u+v] = new_val;
+     for (int k = 2; k <= n; k = k * 2) {
+        for (int j = k / 2; j > 0; j = j / 2) {
+            for (int i = 0; i < n; i++) {
+                int ij = i ^ j;
+                if (ij > i) {
+                    int dir = ((i & k) == 0);
+                    if ((arr[i] > arr[ij]) == dir) {
+                        int temp = arr[i];
+                        arr[i] = arr[ij];
+                        arr[ij] = temp;
+                    }
                 }
             }
-            u+=(v<<1);
-            n +=1;
         }
-        v >>=1;
-        nL<<=1;
+    }
+    for (int i = 0; i < n; i++) {
+        printf("%d,", arr[i]);
+    }
+    printf("\n");
+
+    // Step 2: Merge the sorted sequence into a fully sorted sequence
+    for (int k = n / 2; k > 0; k /= 2) {
+        for (int i = 0; i < n; i += k * 2) {
+            for (int j = 0; j < k; j++) {
+                int p = i + j, q = i + j + k;
+                if ((arr[p] > arr[q])) {
+                    int temp = arr[p];
+                    arr[p] = arr[q];
+                    arr[q] = temp;
+                }
+            }
+        }
     }
 }
 void help_msg();
@@ -74,12 +85,8 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
     }
-    int nums[] = {8,4,7,5,1,2,3,6};
-    bitonic_sort(nums, ARRAY_SIZE(nums));
-
-    for(int i = 0; i < 0; i++){
-        fprintf(stdout, "%d, ",nums[i]);
-    }
+    //int nums[] = {8,4,7,5,1,2,3,6};
+    //bitonic_sort(nums, ARRAY_SIZE(nums));
 
     int idx_start = 0;
     for (int i = optind; i < argc; i++)
@@ -125,8 +132,8 @@ void process_file(const char *fname){
     bitonic_sort(values, number_of_values);
 
     for(int i = 0; i < number_of_values - 1; i++){
-        if(values[i] < values[i+1]){
-            fprintf(stdout, "Values are not ordered %d, %d\n", values[i], values[i+1]);
+        if(values[i] > values[i+1]){
+            fprintf(stderr, "Values are not ordered %d, %d\n", values[i], values[i+1]);
         }
     }
     printf("\n");
@@ -134,7 +141,8 @@ void process_file(const char *fname){
     printf("\n");
     printf("\n");
 
-    for(int i = 0; i < number_of_values; i++){
+    for(int i = 0; i < number_of_values - 1; i++){
         fprintf(stdout, "%d, ",values[i]);
     }
+    fprintf(stdout, "%d\n",values[number_of_values - 1]);
 }
