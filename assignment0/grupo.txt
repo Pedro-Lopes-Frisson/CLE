@@ -1,0 +1,25 @@
+File name: text0.txt
+Total number of words = 17
+N. of words with an 
+	A E I O U Y 
+	5 3 2 3 2 2
+File name: text1.txt
+Total number of words = 1184
+N. of words with an 
+	A E I O U Y 
+	601 617 295 509 248 0
+File name: text2.txt
+Total number of words = 11027
+N. of words with an 
+	A E I O U Y 
+	5399 5455 2935 4442 2623 0
+File name: text3.txt
+Total number of words = 3369
+N. of words with an 
+	A E I O U Y 
+	1775 1652 831 1385 602 0
+File name: text4.txt
+Total number of words = 9914
+N. of words with an 
+	A E I O U Y 
+	4421 4813 1930 3840 2134 0
