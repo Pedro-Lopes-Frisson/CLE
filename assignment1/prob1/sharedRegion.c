@@ -156,8 +156,11 @@ bool is_word_separator(char * c){
     if (len == 0) return true;
 
     unsigned char c0 = c[0];
-    if (c0 == 0x20 || c0 == 0x9 || c0 == 0xA || c0 == 0xD || c0 == 0x2d || c0 == 0x22 || c0 == 0x2e || c0 == 0x2c || c0 == 0x3b || c0 == 0x3a || c0 == 0x3a || c0 == 0x3f || c0 == 0x21 || c0 == 0x5b || c0 == 0x5d || c0 == 0x28 || c0 == 0x29)
+    if (c0 == 0x20 || c0 == 0x9 || c0 == 0xA || c0 == 0xD || c0 == 0x2d || c0 == 0x22 || c0 == 0x2e || c0 == 0x2c ||
+        c0 == 0x3b || c0 == 0x3a || c0 == 0x3a || c0 == 0x3f || c0 == 0x21 || c0 == 0x5b || c0 == 0x5d || c0 == 0x28 ||
+        c0 == 0x29) {
         return true;
+    }
 
     if (len == 3){
         unsigned char c1 = c[1];
@@ -212,7 +215,7 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
     }
     
     file_chunk->file_id = file_id;
-    file_chunk->n_words = 0;
+    (file_chunk->n_words)[0] = 0;
     for (int i = 0; i < VOWELS; i++)
         file_chunk->n_words_vowels[i] = 0;
 
