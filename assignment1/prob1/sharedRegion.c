@@ -69,25 +69,45 @@ void store_file_names (int n, char **filenames){
     }
     n_files = n;
 
-    printf("Files : %d\n", n_files);
-    file_names = malloc(n_files);
-    file_statistics = malloc(sizeof(struct FILES_STATISTICS) * n_files);
+    file_names = (char **) malloc(n_files * sizeof(char *));
+    if(file_names == NULL) {
+        int status = EXIT_FAILURE;
+        fprintf(stderr, "Memory allocation for file_names failed\n");
+        pthread_exit(&status);
+    }
+
+    for (size_t i = 0; i < n_files; i++)
+    {
+        file_names[i] = malloc(strlen(filenames[i]) * sizeof(char)+ 1);
+        if(file_names[i] == NULL) {
+            int status = EXIT_FAILURE;
+            fprintf(stderr, "Memory allocation for file_names failed\n");
+            pthread_exit(&status);
+        }
+    }
     
+    file_statistics = malloc(sizeof(struct FILES_STATISTICS) * n_files);
+
+    if(file_statistics == NULL) {
+        int status = EXIT_FAILURE;
+        fprintf(stderr, "Memory allocation for file_statistics failed\n");
+        pthread_exit(&status);
+    }
+
     for (int i = 0; i < n_files; i++){
 
-        file_names[i] = malloc(strlen(filenames[i]));
+        // copy fname to inner structure
         strcpy( file_names[i], filenames[i]);
 
-        #define fs file_statistics[i]
+        // initialize file statistics conserving the filename
+        strcpy(file_statistics[i].file_name, file_names[i]);
 
-        fs.file_name = malloc(strlen(filenames[i]));
-        strcpy( fs.file_name, filenames[i]);
+        file_statistics[i].n_words = 0;
 
-
-        fs.n_words = 0;
-        memset(&fs.n_words_vowels, 0, VOWELS);
-
-        #undef fs
+        for (size_t j = 0; j < VOWELS; j++)
+        {
+            file_statistics[i].n_words_vowels[j] = 0;
+        }
 
     }
 
@@ -145,21 +165,23 @@ int extract_char(FILE * f, char *  utf_8chr){
         }
     }
 
-    //printf("String: |%s|\n", utf_8chr);
     //printf("\n");
 
     return feof(f) ? EOF : bytes_to_read + 1;
 }
 
-bool is_word_separator(char * c){
-    int len = strlen(c);
-    
-    if (len == 0) return true;
+bool is_word_separator(char * c, int n){
+    int len = n;
+    char * c_str = (char * )malloc(sizeof (char) * (n + 1));
+    strcpy(c_str,c);
+    c_str[len] = '\0';
+    if (len <= 0) return true;
 
     unsigned char c0 = c[0];
     if (c0 == 0x20 || c0 == 0x9 || c0 == 0xA || c0 == 0xD || c0 == 0x2d || c0 == 0x22 || c0 == 0x2e || c0 == 0x2c ||
         c0 == 0x3b || c0 == 0x3a || c0 == 0x3a || c0 == 0x3f || c0 == 0x21 || c0 == 0x5b || c0 == 0x5d || c0 == 0x28 ||
         c0 == 0x29) {
+
         return true;
     }
 
@@ -183,7 +205,7 @@ bool is_word_separator(char * c){
     return false;
 }
 
-int get_data_chunk(struct FILE_CHUNK * file_chunk){
+int get_data_chunk(struct FILE_CHUNK * file_chunk, int threadId){
     // acquire lock
     //printf("get data chunkj\n");
 
@@ -193,13 +215,12 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
        pthread_exit(&status);
     }
 
-    printf("TID: %ld\n\n", pthread_self());
     // read N Bytes until you reach Min Bytes and then try to finish the word
     //
-    printf("File id : %d,\tisOpen: %d,\t", file_id, isOpen);
+    //printf("File id : %d,\tisOpen: %d,\t\n", file_id, isOpen);
     //printf("feof %d,\t ferror %d\n", feof(f), ferror(f));
+
     if (file_id > n_files - 1) {
-        printf("Processing Complete\n");
 
         // release lock
         if ((pthread_mutex_unlock (&accessCR)) != 0) {                   /* exit monitor */                                                
@@ -222,22 +243,34 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
     for (int i = 0; i < VOWELS; i++)
         file_chunk->n_words_vowels[i] = 0;
 
-    int len = 1024 * MIN_KBYTES;
+    int len = 30 * MIN_KBYTES;
     file_chunk->buffer = malloc(sizeof(char) * len);
-    
+    if(file_chunk->buffer == NULL) {
+        fprintf(stderr, "A problem with allocating memory for the file_chunk buffer occurred \n");
+        int status = EXIT_FAILURE;
+        pthread_exit(&status);
+    }
+
     #define f_buffer file_chunk->buffer
 
-    memset(f_buffer, 0, len); // fill buffer with spaces
+    memset(f_buffer, 0, len); // fill buffer with empty
 
     int res;
+    int j = 0;
+    int last_end_of_word = 0;
+    for (j = 0; j< len - 1; j+=res) {
+        res = extract_char(f, &(f_buffer[j]));
 
-    for (int i = 0; i< len; i+=res) {
-        res = extract_char(f, &(f_buffer[i]));
-        if (feof(f)) {
+        if(is_word_separator(&(f_buffer[j]), res) || res == EOF){
+            last_end_of_word = j;
+        }
+
+        if (feof(f) != 0) {
             break;
         }
 
-        if (ferror(f)){
+
+        if (ferror(f) != 0){
             fprintf(stderr, "A problem with the file %s was detected!\n", file_names[file_id]);
 
             // file is over
@@ -253,19 +286,16 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
             return 0;
         }
     }
+    f_buffer[last_end_of_word+1] = '\0';
 
     if (!feof(f)) // nonzero means eof was reached
     {
-        int i = len - 1;
-        while (i >= 0 && is_word_separator(&(f_buffer[i]))) {
-            i--;
-        }
-
-        int end_pos = i;
-
-        fseek(f, len - end_pos, SEEK_CUR); // go back n positions
+        int end_pos = last_end_of_word;
+        file_chunk->buffer_size = end_pos;
+        fseek(f, -(len - end_pos) + 1, SEEK_CUR); // go back n positions
     }
     else{
+        file_chunk->buffer_size = last_end_of_word;
         // if eof was set then the end position is the end position and the word is complete
         // file is completely read
         isOpen = false;
@@ -281,7 +311,6 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
        int status = EXIT_FAILURE;
        pthread_exit(&status);
     }
-    printf("get data chunkj end\n");
 
     return 0;
 }
@@ -296,14 +325,6 @@ void save_partial_results(struct FILE_CHUNK *file_chunk){
     // get the file which the thread was processing and update the file_statistics
     #define fs file_statistics[file_chunk->file_id]
 
-    printf("file_statistics: %s\n", fs.file_name);
-    printf("file_statistics: %d\n", fs.n_words);
-    printf("file_statistics: %d\n", *fs.n_words_vowels);
-
-
-    printf("file_chunk: %d\n", file_chunk->file_id);
-    printf("file_chunk: %d\n", file_chunk->n_words_vowels[0]);
-    printf("file_chunk: %d\n", file_chunk->n_words);
     fs.n_words += (file_chunk->n_words * 1);
     for (int i = 0; i < VOWELS; i++) {
         fs.n_words_vowels[i] += file_chunk->n_words_vowels[i];
@@ -330,8 +351,20 @@ void print_processing_results(){
     }
     
     for (int i = 0; i < n_files; i++) {
-        fprintf(stdout, "File %s:\n", file_names[i]);
-        fprintf(stdout, "NWords %d\n", file_statistics[i].n_words);
+        fprintf(stdout, "File name: %s\n", file_names[i]);
+        fprintf(stdout, "Total Number of words = %d\n", file_statistics[i].n_words);
+        fprintf(stdout, "N. of words with an\n");
+        fprintf(stdout,"\t%10c", 'A' );
+        fprintf(stdout,"\t%10c", 'E' );
+        fprintf(stdout,"\t%10c", 'I' );
+        fprintf(stdout,"\t%10c", 'O' );
+        fprintf(stdout,"\t%10c", 'U' );
+        fprintf(stdout,"\t%10c\n", 'Y' );
+        for (int j = 0; j < VOWELS; ++j) {
+            printf("\t%10d",file_statistics[i].n_words_vowels[j]);
+        }
+        printf("\n");
+        printf("\n");
     }
 
     // release lock
@@ -340,6 +373,8 @@ void print_processing_results(){
        int status = EXIT_FAILURE;
        pthread_exit(&status);
     }
+    free(file_names);
+    free(file_statistics);
 }
 
 

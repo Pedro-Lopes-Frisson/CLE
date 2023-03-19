@@ -18,12 +18,12 @@ struct FILE_CHUNK {
 
    int  n_words;
    int  n_words_vowels[VOWELS];
-   
+
    bool isEOF;
 };
 
 struct FILES_STATISTICS {
-   char * file_name;
+   char file_name[50];
    int  n_words;
    int  n_words_vowels[VOWELS];
 };
@@ -40,7 +40,7 @@ void store_file_names (int n_files, char *fileNames[]);
  * @param file_chunk structure to store data related to the processing of the data and data to be processed
  * @return 1 in case of error or in case there are no more files to be processed, 0 otherwise
  */
-int get_data_chunk(struct FILE_CHUNK * file_chunk);
+int get_data_chunk(struct FILE_CHUNK * file_chunk, int threadId);
 
 /**
  * Stores information related to a file identified in the FILE_CHUNK structure by fileId this operation is performed under mutual exclusion
