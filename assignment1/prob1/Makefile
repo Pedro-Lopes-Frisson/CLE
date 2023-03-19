@@ -1,6 +1,6 @@
 # Compiler flags
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -lpthread -lm
+CFLAGS = -Wall -Wextra -pedantic -std=c11 -pthread -lm -g
 
 # Source files
 SRCS = main.c sharedRegion.c

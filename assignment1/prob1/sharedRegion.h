@@ -16,16 +16,16 @@ struct FILE_CHUNK {
    char * buffer;
    int buffer_size;
 
-   int  n_words[1];
-   int  n_words_vowels[VOWELS];
+   int  n_words;
+   int  n_words_vowels[10];
    
    bool isEOF;
 };
 
 struct FILES_STATISTICS {
-   char * file_name;
+   char file_name[50];
    int  n_words;
-   int  n_words_vowels[VOWELS];
+   int  n_words_vowels[10];
 };
 
 /**

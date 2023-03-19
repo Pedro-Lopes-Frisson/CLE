@@ -70,23 +70,28 @@ void store_file_names (int n, char **filenames){
     n_files = n;
 
     printf("Files : %d\n", n_files);
-    file_names = malloc(n_files);
+    file_names = (char **) malloc(n_files * sizeof(char *));
+
+    for (size_t i = 0; i < n_files; i++)
+    {
+        file_names[i] = malloc(strlen(filenames[i]) * sizeof(char)+ 1);
+    }
+    
     file_statistics = malloc(sizeof(struct FILES_STATISTICS) * n_files);
     
     for (int i = 0; i < n_files; i++){
 
-        file_names[i] = malloc(strlen(filenames[i]));
         strcpy( file_names[i], filenames[i]);
 
         #define fs file_statistics[i]
 
-        fs.file_name = malloc(strlen(filenames[i]));
-        strcpy( fs.file_name, filenames[i]);
-
-
+        strcpy(fs.file_name, file_names[i]);
         fs.n_words = 0;
-        memset(&fs.n_words_vowels, 0, VOWELS);
-
+        for (size_t i = 0; i < VOWELS-1; i++) 
+        {       
+            fs.n_words_vowels[i] = 0;
+        }
+        
         #undef fs
 
     }
@@ -215,7 +220,7 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
     }
     
     file_chunk->file_id = file_id;
-    (file_chunk->n_words)[0] = 0;
+    file_chunk->n_words = 0;
     for (int i = 0; i < VOWELS; i++)
         file_chunk->n_words_vowels[i] = 0;
 
