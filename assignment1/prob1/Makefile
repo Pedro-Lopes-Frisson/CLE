@@ -1,6 +1,6 @@
 # Compiler flags
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -lpthread -lm
+CFLAGS = -Wall -Wextra -pedantic -std=c11 -lpthread -lm -g
 
 # Source files
 SRCS = main.c sharedRegion.c
@@ -17,10 +17,10 @@ $(TARGET): $(OBJS)
 
 # Object file rules
 main.o: main.c sharedRegion.h
-	$(CC) $(CFLAGS) -c main.c -o main.o
+	$(CC) $(CFLAGS) -c main.c -o main.o -g
 
 sharedRegion.o: sharedRegion.c sharedRegion.h
-	$(CC) $(CFLAGS) -c sharedRegion.c -o sharedRegion.o
+	$(CC) $(CFLAGS) -c sharedRegion.c -o sharedRegion.o -g
 
 # Clean rule
 clean:
