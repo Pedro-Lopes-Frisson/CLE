@@ -106,6 +106,7 @@ void store_file_names (int n, char **filenames){
 
 
 int extract_char(FILE * f, char *  utf_8chr){
+    //printf("extract char");
     char c;
     int res, bytes_to_read = 0;
     res = fread(&c, sizeof(unsigned char), 1, f);
@@ -147,7 +148,7 @@ int extract_char(FILE * f, char *  utf_8chr){
     //printf("String: |%s|\n", utf_8chr);
     //printf("\n");
 
-    return res == 0 ? EOF : bytes_to_read + 1;
+    return feof(f) ? EOF : bytes_to_read + 1;
 }
 
 bool is_word_separator(char * c){
@@ -184,6 +185,8 @@ bool is_word_separator(char * c){
 
 int get_data_chunk(struct FILE_CHUNK * file_chunk){
     // acquire lock
+    //printf("get data chunkj\n");
+
     if ((pthread_mutex_lock (&accessCR)) != 0) {                             /* enter monitor */                       
        perror ("error on entering monitor(CF)");                            /* save error in errno */
        int status = EXIT_FAILURE;
@@ -215,7 +218,7 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
     }
     
     file_chunk->file_id = file_id;
-    (file_chunk->n_words)[0] = 0;
+    file_chunk->n_words = 0;
     for (int i = 0; i < VOWELS; i++)
         file_chunk->n_words_vowels[i] = 0;
 
@@ -224,12 +227,16 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
     
     #define f_buffer file_chunk->buffer
 
-    memset(f_buffer, ' ', len); // fill buffer with spaces
+    memset(f_buffer, 0, len); // fill buffer with spaces
 
     int res;
 
-    for (int i = 0; i< len; i+=5) {
+    for (int i = 0; i< len; i+=res) {
         res = extract_char(f, &(f_buffer[i]));
+        if (feof(f)) {
+            break;
+        }
+
         if (ferror(f)){
             fprintf(stderr, "A problem with the file %s was detected!\n", file_names[file_id]);
 
@@ -274,6 +281,7 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk){
        int status = EXIT_FAILURE;
        pthread_exit(&status);
     }
+    printf("get data chunkj end\n");
 
     return 0;
 }
@@ -288,9 +296,17 @@ void save_partial_results(struct FILE_CHUNK *file_chunk){
     // get the file which the thread was processing and update the file_statistics
     #define fs file_statistics[file_chunk->file_id]
 
-    //fs.n_words += file_chunk->n_words[0];
+    printf("file_statistics: %s\n", fs.file_name);
+    printf("file_statistics: %d\n", fs.n_words);
+    printf("file_statistics: %d\n", *fs.n_words_vowels);
+
+
+    printf("file_chunk: %d\n", file_chunk->file_id);
+    printf("file_chunk: %d\n", file_chunk->n_words_vowels[0]);
+    printf("file_chunk: %d\n", file_chunk->n_words);
+    fs.n_words += (file_chunk->n_words * 1);
     for (int i = 0; i < VOWELS; i++) {
-        //fs.n_words_vowels[i] += file_chunk->n_words_vowels[i];
+        fs.n_words_vowels[i] += file_chunk->n_words_vowels[i];
     }
 
     #undef fs

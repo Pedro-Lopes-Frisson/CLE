@@ -16,7 +16,7 @@ struct FILE_CHUNK {
    char * buffer;
    int buffer_size;
 
-   int  n_words[1];
+   int  n_words;
    int  n_words_vowels[VOWELS];
    
    bool isEOF;

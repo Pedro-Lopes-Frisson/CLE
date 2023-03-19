@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
         printf("thread worker, with id %u, has terminated. \n", t);
     }
 
-    print_processing_results();
+    //print_processing_results();
 
 
     exit(EXIT_SUCCESS);
@@ -85,11 +85,10 @@ int main(int argc, char **argv) {
 
 void *process_data_chunk(struct FILE_CHUNK *fc){
 
-    (fc->n_words)[0] = 10;
+    fc->n_words = 10;
     for (int i = 0; i < VOWELS; ++i) {
         (fc->n_words_vowels)[i] = 10 * (i + 1);
     }
-
 }
 
 static void *worker(void *args) {
@@ -98,13 +97,14 @@ static void *worker(void *args) {
 
     struct FILE_CHUNK *file_chunk = (struct  FILE_CHUNK * ) malloc(sizeof (struct FILE_CHUNK)) ;     /* struct to store partial info of current file being processed */
 
-    while (get_data_chunk(&file_chunk) == 0) {        /* while data available */
-        //process_data_chunk(&file_chunk);        /* process current data*/
+    while (get_data_chunk(file_chunk) == 0) {        /* while data available */
+        process_data_chunk(file_chunk);        /* process current data*/
         //printf("Chunk: %s\n", file_chunk->buffer);
-        //save_partial_results(&file_chunk);         /* save in shared region */
+        save_partial_results(file_chunk);         /* save in shared region */
     }
 
     int status = EXIT_SUCCESS;
+
     pthread_exit(&status);
 
 
