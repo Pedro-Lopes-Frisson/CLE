@@ -268,12 +268,10 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
   fprintf(stdout, "%s because chunks_count %d\n\n\n\n", wc_chunks_count == 0 ? "W" : "G", wc_chunks_count);
 
   // get the pointer
-  int j = ( n_workers_needed - 1) - wc_chunks_count--;
+  int j = n_workers_needed  - wc_chunks_count--;
   int offset = (number_of_values / n_workers_needed) * j;
-
   wc->begin = &(values[offset]);
-  wc->dir_flag = (j % 2) == flip;
-  printf("\t\t\t\t||||||||||Dir -> %d\n", wc->dir_flag);
+  wc->dir_flag = (j % 2);
   wc->iteration = it;
   wc->size = number_of_values / n_workers_needed;
   if (j % 2 == 0) flip = !flip;
@@ -295,7 +293,6 @@ void work_done() {
     pthread_exit(&status);
   }
   n_workers_work_is_done++;
-  printf("N is done : %d by %lu\n", n_workers_work_is_done, pthread_self());
   // signal the distributor that we are done with the task
   if ((pthread_cond_signal(&wait_work_done)) != 0) {
     perror("Signal failed! wait_for_work"); /* save error in errno */
@@ -316,18 +313,20 @@ void validate() {
     int status = EXIT_FAILURE;
     pthread_exit(&status);
   }
-  printf("Validate\n");
   for (int i = 0; i < number_of_values - 1; i++) {
-    printf("%d, ", values[i]);
 
-    //if (values[i] > values[i + 1]) {
-    //  fprintf(stderr, "Values are not ordered %d, %d\n", values[i], values[i + 1]);
-    //} else {
-    //  fprintf(stdout, "Values are ordered\n");
-    //}
+    if (values[i] > values[i + 1]) {
+      fprintf(stderr, "Values are not ordered %d, %d\n", values[i], values[i + 1]);
+      break;
+    }
   }
 
-  printf("%d, ", values[number_of_values - 1]);
+  printf("Values Are ordered");
+
+  fclose(f);
+  free(values);
+  free(file_name);
+  free(wc_chunks);
 
   // release lock
   if ((pthread_mutex_unlock(&accessCR)) != 0) { /* exit monitor */

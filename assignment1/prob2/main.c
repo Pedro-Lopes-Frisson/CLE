@@ -15,11 +15,9 @@ static void *worker(void *args);
 
 static void *distributor(void *args);
 
-void process_data_chunk(struct WORK_CHUNK *wc);
-
 
 int main(int argc, char **argv) {
-  
+
   int opt, n_workers;
   while ((opt = getopt(argc, argv, "ht:")) != -1) {
     switch (opt) {
@@ -124,13 +122,8 @@ int main(int argc, char **argv) {
   exit(EXIT_SUCCESS);
 }
 
-void process_data_chunk(struct WORK_CHUNK *wc) {
-  for(int i = 0; i < wc->size; i++){
-    printf("%d\n", wc->begin[i]);
-  }
-}
 
-void bitonic_sort(int * arr, int n, int flag) {
+void bitonic_sort(int *arr_1, int n, int flag) {
   // the two first loops are the merging part
   // the last one is the sorting part
   for (int k = 2; k <= n; k = k * 2) {
@@ -139,25 +132,25 @@ void bitonic_sort(int * arr, int n, int flag) {
       // Sort bitonic sequence of length k according to direction needed
       for (int i = 0; i < n; i++) {
         // sort elements
-        int ij = i ^ j; // get the other index to be sorted
+        int ij = i ^ j;// get the other index to be sorted
         if (ij > i) {
-          int dir = ((i & k) == 0); // get direction
+          int dir = ((i & k) == 0);// get direction
           //printf("k %d,j %d,i %d,ij %d,dir %d\n",k,j,i,ij,dir);
           //CAPS
           //Ascending
-          if(flag%2==0){
-            if ((arr[i] > arr[ij]) == dir) {
-              int temp = arr[i];
-              arr[i] = arr[ij];
-              arr[ij] = temp;
+          if (flag == 0) {
+            if ((arr_1[i] > arr_1[ij]) == dir) {
+              int temp = arr_1[i];
+              arr_1[i] = arr_1[ij];
+              arr_1[ij] = temp;
             }
           }
           // Descending
-          else{
-            if ((arr[i] < arr[ij]) == dir) {
-              int temp = arr[i];
-              arr[i] = arr[ij];
-              arr[ij] = temp;
+          else {
+            if ((arr_1[i] < arr_1[ij]) == dir) {
+              int temp = arr_1[i];
+              arr_1[i] = arr_1[ij];
+              arr_1[ij] = temp;
             }
           }
           //END CAPS
@@ -167,41 +160,39 @@ void bitonic_sort(int * arr, int n, int flag) {
   }
 }
 
-void merge(int * arr, int n, int flag) {
+void merge(int *arr_1, int n, int flag) {
   int k = n;
   for (int j = k / 2; j > 0; j = j / 2) {
     // Sort bitonic sequence of length k according to direction needed
     for (int i = 0; i < n; i++) {
       // sort elements
-      int ij = i ^ j; // get the other index to be sorted
+      int ij = i ^ j;// get the other index to be sorted
       if (ij > i) {
         // int dir = ((i & k) == 0); // get direction
         //printf("k %d,j %d,i %d,ij %d,dir %d\n",k,j,i,ij,dir);
         //CAPS
         // Ascending
-        if(flag%2==0){
-            // printf("%i → ", dir);
-            printf("[%i|%i]\n",i,ij);
-
-          if ((arr[i] > arr[ij])) {
-            // printf("→→[%i|%i]",arr[i],arr[ij]);
-            int temp = arr[i];
-            arr[i] = arr[ij];
-            arr[ij] = temp;
+        if (flag == 0) {
+          // printf("%i → ", dir);
+          if ((arr_1[i] > arr_1[ij])) {
+            // printf("→→[%i|%i]",arr_1[i],arr_1[ij]);
+            int temp = arr_1[i];
+            arr_1[i] = arr_1[ij];
+            arr_1[ij] = temp;
           }
         }
         // Descending
-        else{
-          if ((arr[i] < arr[ij])) {
-            int temp = arr[i];
-            arr[i] = arr[ij];
-            arr[ij] = temp;
+        else {
+          if ((arr_1[i] < arr_1[ij])) {
+            int temp = arr_1[i];
+            arr_1[i] = arr_1[ij];
+            arr_1[ij] = temp;
           }
         }
         //END CAPS
       }
     }
-    k = k/2;
+    k = k / 2;
   }
 }
 
@@ -213,17 +204,15 @@ static void *worker(void *args) {
       sizeof(struct WORK_CHUNK)); /* struct to store partial info of current file being processed */
 
   while (get_work_chunk(wc) == true) { /* while data available */
-    process_data_chunk(wc);    /* process current data*/
-    printf("Dir -> %d;\t begin -> %d\n",wc->dir_flag, *(wc->begin));
-    if(wc->iteration==0) bitonic_sort(wc->begin,wc->size,wc->dir_flag);   /*sort data*/
-    else merge(wc->begin,wc->size,wc->dir_flag);  /*merge data*/
+    if (wc->iteration == 0) bitonic_sort(wc->begin, wc->size, wc->dir_flag); /*sort data*/
+    else
+      merge(wc->begin, wc->size, wc->dir_flag); /*merge data*/
     work_done();
   }
 
   int status = EXIT_SUCCESS;
   free(wc);
   pthread_exit(&status);
-
 }
 
 void help(char *program_name) {
