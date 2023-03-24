@@ -19,7 +19,7 @@ void initialization(void) {
   pthread_cond_init(&workers_ready, NULL);
   it = 0;
   flip = 0;
-  isOver= false;
+  isOver = false;
   setlocale(LC_CTYPE, "");
 }
 
@@ -162,7 +162,7 @@ void distribute() {
       printf("Waiting for worker\n\n");
       printf("Waiting for worker %u\n\n");
       isOver = true;
-      wc_chunks_count = -1;
+      wc_chunks_count = 10;
       if ((pthread_cond_signal(&wait_for_work)) != 0) {
         perror("Signal failed! wait_for_work"); /* save error in errno */
         int status = EXIT_FAILURE;
@@ -212,16 +212,18 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
       pthread_exit(&status);
     }
     printf("Goodbye %lu\n", pthread_self());
-    if(isOver){
-      printf("Goodbye %lu\n", pthread_self());
-      int status = EXIT_SUCCESS;
-      pthread_exit(&status);
+    if (isOver) {
+
+      // release lock
+      if ((pthread_mutex_unlock(&accessCR)) != 0) { /* exit monitor */
+        perror("error on exiting monitor(CF)");     /* save error in errno */
+        int status = EXIT_FAILURE;
+        pthread_exit(&status);
+      }
+      return false;
     }
   }
-  printf("Goodbye %lu   %d %d\n", pthread_self(), isOver, wc_chunks_count);
-  if(isOver || wc_chunks_count <= 0 ) return false;
-  // if i am not need to the funny and go home
-  printf("wc_chunks_count %d\n", wc_chunks_count);
+
   // get the pointer
   int j = n_workers_needed - wc_chunks_count--;
   int offset = (number_of_values / n_workers_needed) * j;
@@ -274,6 +276,8 @@ void validate() {
     if (values[i] > values[i + 1]) {
       fprintf(stderr, "Values are not ordered %d, %d\n", values[i], values[i + 1]);
       break;
+    }else{
+      fprintf(stdout,"Values are ordered\n");
     }
   }
 
