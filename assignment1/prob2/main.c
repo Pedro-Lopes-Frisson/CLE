@@ -136,10 +136,11 @@ static void *worker(void *args) {
       sizeof(struct WORK_CHUNK)); /* struct to store partial info of current file being processed */
 
   while (get_work_chunk(wc) == true) { /* while data available */
-    process_data_chunk(wc);    /* process current data*/
+    fprintf(stdout, "Thread id %u ->", id);
+    process_data_chunk(wc); /* process current data*/
     work_done();
   }
-  printf("I Got Out!\n");
+
   int status = EXIT_SUCCESS;
   free(wc);
   pthread_exit(&status);
