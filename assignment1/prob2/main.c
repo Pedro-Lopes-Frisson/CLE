@@ -19,7 +19,7 @@ void process_data_chunk(struct WORK_CHUNK *wc);
 
 
 int main(int argc, char **argv) {
-
+  
   int opt, n_workers;
   while ((opt = getopt(argc, argv, "ht:")) != -1) {
     switch (opt) {
@@ -128,6 +128,77 @@ void process_data_chunk(struct WORK_CHUNK *wc) {
   fprintf(stdout, "wc.size: %d\twc.begin %d\t, wc.dir_flag %d\t, wc.it %d\t", wc->size, *(wc->begin), wc->dir_flag, wc->iteration);
 }
 
+void bitonic_sort(int * arr, int n, int flag) {
+  // the two first loops are the merging part
+  // the last one is the sorting part
+  for (int k = 2; k <= n; k = k * 2) {
+    // sort the subsequence of k members to bitonic sequences
+    for (int j = k / 2; j > 0; j = j / 2) {
+      // Sort bitonic sequence of length k according to direction needed
+      for (int i = 0; i < n; i++) {
+        // sort elements
+        int ij = i ^ j; // get the other index to be sorted
+        if (ij > i) {
+          int dir = ((i & k) == 0); // get direction
+          //printf("k %d,j %d,i %d,ij %d,dir %d\n",k,j,i,ij,dir);
+          //CAPS
+          //Ascending
+          if(flag%2==0){
+            if ((arr[i] > arr[ij]) == dir) {
+              int temp = arr[i];
+              arr[i] = arr[ij];
+              arr[ij] = temp;
+            }
+          }
+          // Descending
+          else{
+            if ((arr[i] < arr[ij]) == dir) {
+              int temp = arr[i];
+              arr[i] = arr[ij];
+              arr[ij] = temp;
+            }
+          }
+          //END CAPS
+        }
+      }
+    }
+  }
+}
+
+void merge(int * arr, int n, int flag) {
+  int k = n/2;
+  for (int j = k / 2; j > 0; j = j / 2) {
+    // Sort bitonic sequence of length k according to direction needed
+    for (int i = 0; i < n; i++) {
+      // sort elements
+      int ij = i ^ j; // get the other index to be sorted
+      if (ij > i) {
+        int dir = ((i & k) == 0); // get direction
+        //printf("k %d,j %d,i %d,ij %d,dir %d\n",k,j,i,ij,dir);
+        //CAPS
+        // Ascending
+        if(flag%2==0){
+          if ((arr[i] > arr[ij]) == dir) {
+            int temp = arr[i];
+            arr[i] = arr[ij];
+            arr[ij] = temp;
+          }
+        }
+        // Descending
+        else{
+          if ((arr[i] < arr[ij]) == dir) {
+            int temp = arr[i];
+            arr[i] = arr[ij];
+            arr[ij] = temp;
+          }
+        }
+        //END CAPS
+      }
+    }
+    k = k/2;
+  }
+}
+
 static void *worker(void *args) {
 
   unsigned int id = *((unsigned int *) args); /* worker id */
@@ -137,12 +208,16 @@ static void *worker(void *args) {
 
   while (get_work_chunk(wc) == true) { /* while data available */
     process_data_chunk(wc);    /* process current data*/
+
+    if(wc->iteration==1) bitonic_sort(wc->begin,wc->size,id);   /*sort data*/
+    else merge(wc->begin,wc->size,id);  /*merge data*/
     work_done();
   }
   printf("I Got Out!\n");
   int status = EXIT_SUCCESS;
   free(wc);
   pthread_exit(&status);
+
 }
 
 void help(char *program_name) {
