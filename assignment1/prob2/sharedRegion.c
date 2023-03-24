@@ -85,7 +85,7 @@ void read_file() {
   values = (int *) malloc(sizeof(int) * number_of_values);
 
   for (int i = 0; i < number_of_values; i++) {
-    res = fread(&(values[i]), 1, 1, f);
+    res = fread(&(values[i]), sizeof(int), 1, f);
     if (res == 0) {
       fprintf(stderr, "Error reading value of array\n");
       exit(EXIT_FAILURE);
