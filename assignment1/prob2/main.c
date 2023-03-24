@@ -125,7 +125,9 @@ int main(int argc, char **argv) {
 }
 
 void process_data_chunk(struct WORK_CHUNK *wc) {
-  fprintf(stdout, "wc.size: %d\twc.begin %d\t, wc.dir_flag %d\t, wc.it %d\t", wc->size, *(wc->begin), wc->dir_flag, wc->iteration);
+  for(int i = 0; i < wc->size; i++){
+    printf("%d\n", wc->begin[i]);
+  }
 }
 
 void bitonic_sort(int * arr, int n, int flag) {
@@ -166,19 +168,23 @@ void bitonic_sort(int * arr, int n, int flag) {
 }
 
 void merge(int * arr, int n, int flag) {
-  int k = n/2;
+  int k = n;
   for (int j = k / 2; j > 0; j = j / 2) {
     // Sort bitonic sequence of length k according to direction needed
     for (int i = 0; i < n; i++) {
       // sort elements
       int ij = i ^ j; // get the other index to be sorted
       if (ij > i) {
-        int dir = ((i & k) == 0); // get direction
+        // int dir = ((i & k) == 0); // get direction
         //printf("k %d,j %d,i %d,ij %d,dir %d\n",k,j,i,ij,dir);
         //CAPS
         // Ascending
         if(flag%2==0){
-          if ((arr[i] > arr[ij]) == dir) {
+            // printf("%i → ", dir);
+            printf("[%i|%i]\n",i,ij);
+
+          if ((arr[i] > arr[ij])) {
+            // printf("→→[%i|%i]",arr[i],arr[ij]);
             int temp = arr[i];
             arr[i] = arr[ij];
             arr[ij] = temp;
@@ -186,7 +192,7 @@ void merge(int * arr, int n, int flag) {
         }
         // Descending
         else{
-          if ((arr[i] < arr[ij]) == dir) {
+          if ((arr[i] < arr[ij])) {
             int temp = arr[i];
             arr[i] = arr[ij];
             arr[ij] = temp;
@@ -208,8 +214,9 @@ static void *worker(void *args) {
 
   while (get_work_chunk(wc) == true) { /* while data available */
     process_data_chunk(wc);    /* process current data*/
-    if(wc->iteration==1) bitonic_sort(wc->begin,wc->size,id);   /*sort data*/
-    else merge(wc->begin,wc->size,id);  /*merge data*/
+    printf("Dir -> %d;\t begin -> %d\n",wc->dir_flag, *(wc->begin));
+    if(wc->iteration==0) bitonic_sort(wc->begin,wc->size,wc->dir_flag);   /*sort data*/
+    else merge(wc->begin,wc->size,wc->dir_flag);  /*merge data*/
     work_done();
   }
 

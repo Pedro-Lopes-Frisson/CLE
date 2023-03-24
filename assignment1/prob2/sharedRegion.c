@@ -7,6 +7,58 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** \brief save the filenames to be read */
+static char *file_name;
+
+//8
+static int n_workers;
+
+static int n_workers_needed;
+/**
+ * how many workers are workin
+ */
+static int n_workers_work_is_done;
+
+static int n_workers_ready_to_work;
+
+/** \brief array that holds every number to be sorted in place */
+static int *values;
+
+/**
+ * iteration num
+ */
+static int it;
+
+/** \brief condition used by the distributor to ensure that every worker has concluded his sorting iteration */
+static pthread_cond_t wait_work_done;
+
+/** \brief workers condition to wait for work assignment */
+static pthread_cond_t wait_for_work;
+
+/** \brief distributor uses this condition to wait for the workers to be ready for processing */
+static pthread_cond_t workers_ready;
+
+/** \brief flag which warrants that the data transfer region is initialized exactly once */
+static pthread_once_t init = PTHREAD_ONCE_INIT;
+
+
+static bool isOver;
+
+static FILE *f;
+
+
+static int number_of_values;
+
+static struct WORK_CHUNK * wc_chunks;
+static int wc_chunks_count;
+static int flip;
+
+/** \brief locking flag which warrants mutual exclusion inside the monitor */
+static pthread_mutex_t accessCR = PTHREAD_MUTEX_INITIALIZER;
+
+static int iterations_required;
+
+
 
 /**
  *  \brief Initialization of the data transfer region.
@@ -116,7 +168,6 @@ void distribute() {
     pthread_exit(&status);
   }
 
-  int offset;
 
   while (n_workers_ready_to_work != n_workers_needed) {
     if ((pthread_cond_wait(&workers_ready, &accessCR)) != 0) {
@@ -217,11 +268,12 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
   fprintf(stdout, "%s because chunks_count %d\n\n\n\n", wc_chunks_count == 0 ? "W" : "G", wc_chunks_count);
 
   // get the pointer
-  int j = n_workers_needed - wc_chunks_count--;
+  int j = ( n_workers_needed - 1) - wc_chunks_count--;
   int offset = (number_of_values / n_workers_needed) * j;
 
   wc->begin = &(values[offset]);
   wc->dir_flag = (j % 2) == flip;
+  printf("\t\t\t\t||||||||||Dir -> %d\n", wc->dir_flag);
   wc->iteration = it;
   wc->size = number_of_values / n_workers_needed;
   if (j % 2 == 0) flip = !flip;
@@ -264,14 +316,18 @@ void validate() {
     int status = EXIT_FAILURE;
     pthread_exit(&status);
   }
+  printf("Validate\n");
   for (int i = 0; i < number_of_values - 1; i++) {
-    if (values[i] > values[i + 1]) {
-      fprintf(stderr, "Values are not ordered %d, %d\n", values[i], values[i + 1]);
-      break;
-    } else {
-      fprintf(stdout, "Values are ordered\n");
-    }
+    printf("%d, ", values[i]);
+
+    //if (values[i] > values[i + 1]) {
+    //  fprintf(stderr, "Values are not ordered %d, %d\n", values[i], values[i + 1]);
+    //} else {
+    //  fprintf(stdout, "Values are ordered\n");
+    //}
   }
+
+  printf("%d, ", values[number_of_values - 1]);
 
   // release lock
   if ((pthread_mutex_unlock(&accessCR)) != 0) { /* exit monitor */
