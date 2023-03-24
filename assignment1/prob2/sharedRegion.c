@@ -134,14 +134,14 @@ void distribute() {
     // increment wc_chunks_count
     for (int j = 0; j < n_workers_needed; j++) {
       wc_chunks_count++;
-    }
 
-    // send signal for worker who are waiting for work
-    // implicit release of lock
-    if ((pthread_cond_signal(&wait_for_work)) != 0) {
-      perror("Signal failed! wait_for_work"); /* save error in errno */
-      int status = EXIT_FAILURE;
-      pthread_exit(&status);
+      // send signal for worker who are waiting for work
+      // implicit release of lock
+      if ((pthread_cond_signal(&wait_for_work)) != 0) {
+        perror("Signal failed! wait_for_work"); /* save error in errno */
+        int status = EXIT_FAILURE;
+        pthread_exit(&status);
+      }
     }
 
     // wait for workers to finish what they are doing
@@ -157,28 +157,18 @@ void distribute() {
     wc_chunks_count = 0;
     n_workers_ready_to_work = 0;
     fprintf(stdout, "it %d is done\n", it);
-
-    if (it == iterations_required - 1) {
-      printf("Waiting for worker\n\n");
-      printf("Waiting for worker %u\n\n");
-      isOver = true;
-      wc_chunks_count = 10;
-      if ((pthread_cond_signal(&wait_for_work)) != 0) {
-        perror("Signal failed! wait_for_work"); /* save error in errno */
-        int status = EXIT_FAILURE;
-        pthread_exit(&status);
-      }
-      printf("signal wait_for_work\n");
-      if ((pthread_mutex_unlock(&accessCR)) != 0) { /* exit monitor */
-        perror("error on exiting monitor(CF)");     /* save error in errno */
-        int status = EXIT_FAILURE;
-        pthread_exit(&status);
-      }
-      return;
-    }
   }
 
+  isOver = true;
+  wc_chunks_count = -12314124;
 
+  for (int i = 0; i < n_workers; i++) {
+    if ((pthread_cond_signal(&wait_for_work)) != 0) {
+      perror("Signal failed! wait_for_work"); /* save error in errno */
+      int status = EXIT_FAILURE;
+      pthread_exit(&status);
+    }
+  }
   if ((pthread_mutex_unlock(&accessCR)) != 0) { /* exit monitor */
     perror("error on exiting monitor(CF)");     /* save error in errno */
     int status = EXIT_FAILURE;
@@ -193,6 +183,7 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
     int status = EXIT_FAILURE;
     pthread_exit(&status);
   }
+
   n_workers_ready_to_work++;
 
   if ((pthread_cond_signal(&workers_ready)) != 0) {
@@ -201,19 +192,18 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
     pthread_exit(&status);
   }
 
-  printf("wc_chunks_count %d\n", wc_chunks_count);
-  printf("it:  %d\n", it);
+  fprintf(stdout, "%s because chunks_count %d\n\nTHREAD: %lu\n\n", wc_chunks_count == 0 ? "W" : "G", wc_chunks_count, pthread_self());
 
   while (wc_chunks_count <= 0) {
-    printf("Waiting for work %lu\n", pthread_self());
+
     if ((pthread_cond_wait(&wait_for_work, &accessCR)) != 0) {
       perror("Signal failed! wait_for_work"); /* save error in errno */
       int status = EXIT_FAILURE;
       pthread_exit(&status);
     }
-    printf("Goodbye %lu\n", pthread_self());
+    fprintf(stdout, "wc_chunks_count %d\n", wc_chunks_count);
     if (isOver) {
-
+      fprintf(stdout, "Entrei is over\n");
       // release lock
       if ((pthread_mutex_unlock(&accessCR)) != 0) { /* exit monitor */
         perror("error on exiting monitor(CF)");     /* save error in errno */
@@ -223,6 +213,8 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
       return false;
     }
   }
+
+  fprintf(stdout, "%s because chunks_count %d\n\n\n\n", wc_chunks_count == 0 ? "W" : "G", wc_chunks_count);
 
   // get the pointer
   int j = n_workers_needed - wc_chunks_count--;
@@ -276,8 +268,8 @@ void validate() {
     if (values[i] > values[i + 1]) {
       fprintf(stderr, "Values are not ordered %d, %d\n", values[i], values[i + 1]);
       break;
-    }else{
-      fprintf(stdout,"Values are ordered\n");
+    } else {
+      fprintf(stdout, "Values are ordered\n");
     }
   }
 
