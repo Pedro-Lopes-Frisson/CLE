@@ -1,5 +1,5 @@
 #include <mpi.h>
-#include "distributor.h"
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -41,6 +41,10 @@ int main (int argc, char *argv[])
       MPI_Finalize ();
       return EXIT_FAILURE;
     }
+
+  struct timespec start_time, end_time;
+  double elapsed_time;
+  clock_gettime(CLOCK_MONOTONIC, &start_time);
 
   nIter = (int) (log2 (nProc) + 1.1);
 
@@ -140,6 +144,12 @@ int main (int argc, char *argv[])
     }
   }
   printf("Values Are ordered\n");
+
+  clock_gettime(CLOCK_MONOTONIC, &end_time);
+  elapsed_time = (end_time.tv_sec - start_time.tv_sec) * 1e9; // Convert seconds to nanoseconds
+  elapsed_time += (end_time.tv_nsec - start_time.tv_nsec);
+
+  printf("Elapsed time: %f nanoseconds\n", elapsed_time);
   MPI_Finalize ();
 
   return EXIT_SUCCESS;
