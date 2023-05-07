@@ -68,17 +68,27 @@ int main(int argc, char **argv) {
     // only thing that we have left is the arguments with no flags let's assume they are all filenames
     int n_files = argc - optind;
 
-    if (n_files <= 0) {
-      fprintf(stderr, "It would be nice to provide files to be accounted for.\n");
-      MPI_Finalize();
-      exit(EXIT_SUCCESS);
-    }
 
     int available_worker;
     int flag;
     MPI_Status status;
     store_file_names(n_files, &(argv[optind]));
     struct FILE_CHUNK file_chunk;
+
+
+    if (n_files <= 0) {
+      fprintf(stderr, "It would be nice to provide files to be accounted for.\n");
+      
+      for (int k = 1; k < size; k++) {
+        worker_status[k] = true;
+        MPI_Send((char *) &file_chunk, sizeof(struct FILE_CHUNK), MPI_BYTE, k, TERMINATION_TAG, MPI_COMM_WORLD);
+      //printf("Sending done to every worker process %d\n", k);
+      received_count++;
+    }
+      MPI_Finalize();
+      exit(EXIT_SUCCESS);
+    }
+
     while (get_data_chunk(&file_chunk, 0) == 0) {        /* while data available */
 
       // check for free workers
