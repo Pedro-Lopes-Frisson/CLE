@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #define MAX_KBYTES 8
-#define MIN_KBYTES 4
+#define MIN_KBYTES 2
 
 static char ** file_names;
 
@@ -24,12 +24,6 @@ static pthread_cond_t store;
 /** \brief workers synchronization point when next chunk was obtained and processed */
 static pthread_cond_t process;
 
-/** \brief flag signaling the previously processed partial info was stored */
-static bool stored;
-
-/** \brief flag signaling the next chunk was obtained/processed */
-static bool processed;
-
 /** \brief position of the file */
 static int pos;
 
@@ -39,7 +33,6 @@ static bool isOpen;
 static FILE * f;
 
 static int file_id ;
-
 
 /** \brief locking flag which warrants mutual exclusion inside the monitor */
 static pthread_mutex_t accessCR = PTHREAD_MUTEX_INITIALIZER;
@@ -125,7 +118,7 @@ void store_file_names (int n, char **filenames){
 }
 
 
-int extract_char(FILE * f, char *  utf_8chr){
+static int extract_char(FILE * f, char *  utf_8chr){
     //printf("extract char");
     char c;
     int res, bytes_to_read = 0;
@@ -170,7 +163,7 @@ int extract_char(FILE * f, char *  utf_8chr){
     return feof(f) ? EOF : bytes_to_read + 1;
 }
 
-bool is_word_separator(char * c, int n){
+static bool is_word_separator(char * c, int n){
     int len = n;
     char * c_str = (char * )malloc(sizeof (char) * (n + 1));
     strcpy(c_str,c);
@@ -205,6 +198,9 @@ bool is_word_separator(char * c, int n){
     return false;
 }
 
+
+/** function that takes in a allocated file_chunk structure and fills the char * buffer with characters in order to separate a file into chunks of data
+ * */
 int get_data_chunk(struct FILE_CHUNK * file_chunk, int threadId){
     // acquire lock
     //printf("get data chunkj\n");
@@ -243,7 +239,7 @@ int get_data_chunk(struct FILE_CHUNK * file_chunk, int threadId){
     for (int i = 0; i < VOWELS; i++)
         file_chunk->n_words_vowels[i] = 0;
 
-    int len = 30 * MIN_KBYTES;
+    int len = 4096;
     file_chunk->buffer = malloc(sizeof(char) * len);
     if(file_chunk->buffer == NULL) {
         fprintf(stderr, "A problem with allocating memory for the file_chunk buffer occurred \n");

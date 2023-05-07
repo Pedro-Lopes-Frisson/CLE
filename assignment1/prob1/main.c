@@ -61,6 +61,10 @@ int main(int argc, char **argv) {
     int *status_p;                                  /* pointer to execution status */
 
     int t;
+    struct timespec start_time, end_time;
+    double elapsed_time;
+
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     for (int t = 0; t < n_workers; t++) work[t] = t;
 
@@ -79,10 +83,6 @@ int main(int argc, char **argv) {
 
     printf("Workers created and start processing.\n");
 
-    struct timespec start_time, end_time;
-    double elapsed_time;
-
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     for (t = 0; t < n_workers; t++) {
         if (pthread_join(tIdWork[t], (void *) &status_p) !=

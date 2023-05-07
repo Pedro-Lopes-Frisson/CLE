@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     switch (opt) {
       case 't':
         n_workers = (int) atoi(optarg);
-        if (n_workers <= 0 || n_workers >= 20) {
+        if (n_workers <= 0 ){
           fprintf(stderr, "%s: non positive number less than 20\n", basename(argv[0]));
           return EXIT_FAILURE;
         }
@@ -73,6 +73,10 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
+  struct timespec start_time, end_time;
+  double elapsed_time;
+
+  clock_gettime(CLOCK_MONOTONIC, &start_time);
 
   for (t = 0; t < n_workers; t++) {
     if (pthread_create(&tIdWork[t], NULL, worker, &work[t]) !=
@@ -86,10 +90,6 @@ int main(int argc, char **argv) {
 
   printf("Workers created and start processing.\n");
 
-  struct timespec start_time, end_time;
-  double elapsed_time;
-
-  clock_gettime(CLOCK_MONOTONIC, &start_time);
 
   if (pthread_join(distributor_t, NULL) !=
       0) /* wait for thread worker to terminate */

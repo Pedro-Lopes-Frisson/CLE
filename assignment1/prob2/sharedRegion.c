@@ -207,7 +207,6 @@ void distribute() {
     n_workers_work_is_done = 0;
     wc_chunks_count = 0;
     n_workers_ready_to_work = 0;
-    fprintf(stdout, "it %d is done\n", it);
   }
 
   isOver = true;
@@ -243,7 +242,6 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
     pthread_exit(&status);
   }
 
-  fprintf(stdout, "%s because chunks_count %d\n\nTHREAD: %lu\n\n", wc_chunks_count == 0 ? "W" : "G", wc_chunks_count, pthread_self());
 
   while (wc_chunks_count <= 0) {
 
@@ -252,9 +250,7 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
       int status = EXIT_FAILURE;
       pthread_exit(&status);
     }
-    fprintf(stdout, "wc_chunks_count %d\n", wc_chunks_count);
     if (isOver) {
-      fprintf(stdout, "Entrei is over\n");
       // release lock
       if ((pthread_mutex_unlock(&accessCR)) != 0) { /* exit monitor */
         perror("error on exiting monitor(CF)");     /* save error in errno */
@@ -265,7 +261,6 @@ bool get_work_chunk(struct WORK_CHUNK *wc) {
     }
   }
 
-  fprintf(stdout, "%s because chunks_count %d\n\n\n\n", wc_chunks_count == 0 ? "W" : "G", wc_chunks_count);
 
   // get the pointer
   int j = n_workers_needed  - wc_chunks_count--;
