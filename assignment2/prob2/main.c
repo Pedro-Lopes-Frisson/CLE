@@ -36,6 +36,12 @@ int main (int argc, char *argv[])
       MPI_Finalize ();
       return EXIT_FAILURE;
     }
+  if ((nProc == 0) || ((nProc & (nProc - 1)) != 0))
+    { if (rank == 0) printf ("Number of processes should be a power of 2, less or equal to 8.\n");
+      MPI_Finalize ();
+      return EXIT_FAILURE;
+    }
+
   nIter = (int) (log2 (nProc) + 1.1);
 
   if (rank == 0)
@@ -103,8 +109,12 @@ int main (int argc, char *argv[])
         // printf ("Group: %d| Interation: %d\n", presentGroup, j);
         if (rank >= nProcNow)
           { free (recData);
+          // while (true)
+          // {
+          //   /* code */
+          // }
             MPI_Finalize ();
-            return EXIT_SUCCESS;
+            exit(EXIT_SUCCESS);
           }
       }
     MPI_Comm_size (presentComm, &nProc);
